@@ -1,58 +1,71 @@
 @echo off
 title YouTube a MP3
 cd /d "%~dp0"
+setlocal enableextensions
+set "HERE=%~dp0"
+
+REM ---------- Configuracion ----------
+set "NODE_VERSION=v20.11.0"
+set "NODE_DIR=node-%NODE_VERSION%-win-x64"
+set "NODE_ZIP_URL=https://nodejs.org/dist/%NODE_VERSION%/%NODE_DIR%.zip"
+set "YTDLP_URL=https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
 
 echo ================================================
-echo    YouTube a MP3  -  Iniciando...
+echo    YouTube a MP3  -  Preparando todo...
+echo    (la primera vez descarga lo necesario)
 echo ================================================
 echo.
 
-REM --- Comprobar Node.js ---
+REM ---------- 1) Node: sistema, portable, o descargar portable ----------
+set "NEED_PORTABLE=0"
 where node >nul 2>nul
-if errorlevel 1 (
-  echo [ERROR] No se encuentra Node.js en tu equipo.
-  echo.
-  echo   Descarga la version "LTS" desde:  https://nodejs.org
-  echo   Instalala y vuelve a hacer doble clic en este archivo.
-  echo.
-  pause
-  exit /b
+if errorlevel 1 set "NEED_PORTABLE=1"
+
+if "%NEED_PORTABLE%"=="1" (
+  if not exist "bin\node\node.exe" (
+    echo No se encontro Node.js. Descargando version portable ^(no instala nada^)...
+    if not exist "bin" mkdir "bin"
+    powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; try { Invoke-WebRequest -Uri '%NODE_ZIP_URL%' -OutFile 'bin\node.zip' } catch { exit 1 }"
+    if not exist "bin\node.zip" (
+      echo.
+      echo [ERROR] No se pudo descargar Node. Revisa tu conexion a internet.
+      echo.
+      pause
+      exit /b
+    )
+    echo Extrayendo Node...
+    powershell -NoProfile -Command "Expand-Archive -Path 'bin\node.zip' -DestinationPath 'bin' -Force"
+    move "bin\%NODE_DIR%" "bin\node" >nul
+    del "bin\node.zip" >nul 2>nul
+  )
+  set "PATH=%HERE%bin\node;%PATH%"
 )
 
-REM --- Comprobar Python ---
-where python >nul 2>nul
-if errorlevel 1 (
-  echo [ERROR] No se encuentra Python en tu equipo.
-  echo.
-  echo   Descargalo desde:  https://www.python.org/downloads/
-  echo   IMPORTANTE: marca la casilla "Add Python to PATH" al instalar.
-  echo   Luego vuelve a hacer doble clic en este archivo.
-  echo.
-  pause
-  exit /b
+REM ---------- 2) yt-dlp.exe (sin Python) ----------
+if not exist "bin\yt-dlp.exe" (
+  echo Descargando yt-dlp.exe...
+  if not exist "bin" mkdir "bin"
+  powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; try { Invoke-WebRequest -Uri '%YTDLP_URL%' -OutFile 'bin\yt-dlp.exe' } catch { exit 1 }"
+  if not exist "bin\yt-dlp.exe" (
+    echo.
+    echo [ERROR] No se pudo descargar yt-dlp. Revisa tu conexion a internet.
+    echo.
+    pause
+    exit /b
+  )
 )
 
-REM --- Instalar dependencias de Node la primera vez ---
+REM ---------- 3) Dependencias de Node (express + ffmpeg) ----------
 if not exist "node_modules" (
-  echo Instalando dependencias por primera vez. Esto puede tardar 1-2 minutos...
+  echo Instalando dependencias ^(solo la primera vez, 1-2 minutos^)...
   echo.
   call npm install
   echo.
 )
 
-REM --- Asegurar que yt-dlp esta instalado ---
-python -m yt_dlp --version >nul 2>nul
-if errorlevel 1 (
-  echo Instalando yt-dlp...
-  python -m pip install --quiet --upgrade yt-dlp
-  echo.
-)
-
-REM --- Arrancar el servidor en su propia ventana ---
+REM ---------- 4) Arrancar servidor y abrir navegador ----------
 echo Iniciando el servidor...
 start "YouTube a MP3 (servidor)" cmd /k node server.js
-
-REM --- Esperar y abrir el navegador ---
 echo Esperando a que arranque...
 timeout /t 3 >nul
 start "" http://localhost:3000

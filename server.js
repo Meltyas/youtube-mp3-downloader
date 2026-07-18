@@ -12,6 +12,13 @@ const DEFAULT_DOWNLOADS = path.join(__dirname, "downloads");
 const PORT = process.env.PORT || 3000;
 const PYTHON = process.platform === "win32" ? "python" : "python3";
 
+// yt-dlp: usa el binario suelto de bin/ (sin Python) si existe; si no, cae a "python -m yt_dlp".
+const YTDLP_EXE = path.join(__dirname, "bin", process.platform === "win32" ? "yt-dlp.exe" : "yt-dlp");
+const HAS_YTDLP_EXE = fs.existsSync(YTDLP_EXE);
+function spawnYtdlp(args) {
+  return HAS_YTDLP_EXE ? spawn(YTDLP_EXE, args) : spawn(PYTHON, ["-m", "yt_dlp", ...args]);
+}
+
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(DEFAULT_DOWNLOADS, { recursive: true });
 
@@ -75,7 +82,6 @@ function expandUrl(url) {
     const isMix = listMatch && /^(RD|UL|RDMM|RDCLAK)/.test(listMatch[1]);
 
     const args = [
-      "-m", "yt_dlp",
       "--no-warnings",
       "--flat-playlist",
       "--print", "%(id)s\t%(title)s\t%(duration)s",
@@ -85,7 +91,7 @@ function expandUrl(url) {
 
     args.push(url);
 
-    const p = spawn(PYTHON, args);
+    const p = spawnYtdlp(args);
     let out = "";
     p.stdout.on("data", (d) => (out += d.toString()));
     p.on("close", () => {
@@ -110,8 +116,7 @@ function expandUrl(url) {
 
 // Metadatos para una URL suelta que no se pudo expandir (p.ej. otra web)
 function fetchMeta(job) {
-  const p = spawn(PYTHON, [
-    "-m", "yt_dlp",
+  const p = spawnYtdlp([
     "--no-warnings",
     "--skip-download",
     "--print", "%(title)s\t%(duration)s\t%(thumbnail)s",
@@ -208,7 +213,6 @@ function runJob(job) {
 
     const outTemplate = path.join(dir, "%(title)s [%(id)s].%(ext)s");
     const args = [
-      "-m", "yt_dlp",
       "-x",
       "--audio-format", "mp3",
       "--audio-quality", "0",
@@ -220,7 +224,7 @@ function runJob(job) {
       job.url,
     ];
 
-    const p = spawn(PYTHON, args);
+    const p = spawnYtdlp(args);
     let stderr = "";
 
     const handleLine = (line) => {

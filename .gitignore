@@ -1,6 +1,9 @@
 # Dependencias
 node_modules/
 
+# Binarios que el lanzador descarga solo (Node portable, yt-dlp.exe)
+bin/
+
 # Contenido personal (no se sube a GitHub)
 downloads/
 data/
