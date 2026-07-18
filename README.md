@@ -15,23 +15,25 @@ Pega una o varias URLs y las va descargando (varias a la vez), con auto-descarga
 - 🗂️ **Historial persistente**: no desaparece al cerrar. Se borra solo con el botón "Borrar todo" o quitando entradas.
 - 📁 **Carpeta de destino configurable** (por defecto `downloads/`).
 
-## 🚀 Uso rápido (Windows) — sin instalar nada
+## 🚀 Uso rápido (Windows)
 
-Solo haz **doble clic en `Iniciar.bat`**. Eso es todo.
+Solo tienes que hacer **doble clic en `Iniciar.bat`**. Es el único archivo que debes abrir.
 
-La primera vez, el lanzador **descarga solo** lo que haga falta (no instala nada en el sistema, no pide administrador):
-- **Node portable** (si no tienes Node) → carpeta local `bin\`.
-- **yt-dlp.exe** (no necesita Python) → carpeta local `bin\`.
-- Dependencias de Node (express, ffmpeg).
+La primera vez, el lanzador se encarga de todo automáticamente:
+- Instala **Node.js** y **Python** si no los tienes (usando `winget`).
+- Instala **yt-dlp** y las dependencias (express, ffmpeg).
+- Abre la app en tu navegador.
 
-Luego abre la app en tu navegador. Pega URLs de YouTube (vídeos o playlists) y listo.
+Pega URLs de YouTube (vídeos o playlists) y listo.
 Para cerrar la app, cierra la ventana del servidor.
 
-> Requiere Windows de 64 bits y conexión a internet la primera vez.
+> Si es la primera vez y se instala Node/Python, puede que tengas que cerrar la
+> ventana y volver a hacer doble clic en `Iniciar.bat` una vez (Windows necesita
+> refrescar el PATH). El lanzador te lo indicará.
 
 ## 🛠️ Uso manual (cualquier sistema)
 
-Requisitos: Node.js y `yt-dlp` (el binario `yt-dlp.exe` en `bin/`, o `pip install yt-dlp`).
+Requisitos: Node.js, Python y `yt-dlp` (`pip install yt-dlp`).
 ffmpeg viene incluido vía el paquete `ffmpeg-static`.
 
 ```bash
